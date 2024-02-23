@@ -10,6 +10,7 @@ But:
 """
 
 from .base import Tokenizer, get_stats, merge
+from tqdm import tqdm
 
 
 class BasicTokenizer(Tokenizer):
@@ -54,10 +55,15 @@ class BasicTokenizer(Tokenizer):
         text = text_bytes.decode("utf-8", errors="replace")
         return text
 
+
     def encode(self, text):
         # given a string text, return the token ids
         text_bytes = text.encode("utf-8") # raw bytes
         ids = list(text_bytes) # list of integers in range 0..255
+        
+        # Initialize tqdm progress bar
+        pbar = tqdm(total=len(ids), desc="Encoding")
+        
         while len(ids) >= 2:
             # find the pair with the lowest merge index
             stats = get_stats(ids)
@@ -71,4 +77,12 @@ class BasicTokenizer(Tokenizer):
             # otherwise let's merge the best pair (lowest merge index)
             idx = self.merges[pair]
             ids = merge(ids, pair, idx)
+            
+            # Update tqdm progress bar
+            pbar.update(1)
+        
+        # Close tqdm progress bar
+        pbar.close()
+        
         return ids
+
